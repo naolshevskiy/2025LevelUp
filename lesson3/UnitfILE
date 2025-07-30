@@ -1,0 +1,17 @@
+  GNU nano 4.8                                                                            /etc/systemd/system/webbooks.service
+Description=Digital Library Web Application
+After=network.target
+After=postgresql.servic
+
+[Service]
+Type=simple
+User=webbooks
+WorkingDirectory=/home/nikita/2025-07-example/apps/webbooks/
+ExecStart=/usr/bin/java -jar target/DigitalLibrary-0.0.1-SNAPSHOT.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
