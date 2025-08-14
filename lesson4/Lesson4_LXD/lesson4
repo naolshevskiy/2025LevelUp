@@ -1,0 +1,34 @@
+Лог выполняемых команд
+
+##На хосте
+
+sudo apt install lxd
+lxd init
+lxc network list
+ip -br a
+lxc remote list
+lxc image list images:
+lxc image list ubuntu:
+lxc image list ubuntu: | grep x64
+lxc image list ubuntu: | grep CONTAINERn4
+lxc image copy ubuntu:f5d0ffc35dc4 local: --alias=ubuntu22
+lxc image list local:
+lxc launch local:ubuntu22 lesson4
+lxc info lesson4
+lxc list
+ip -br a
+lxc exec lesson4 -- /bin/sh
+
+
+##В LXD
+1) sudo apt update && sudo apt upgrade
+2) sudo apt -y install apache2
+3) sudo systemctl status apache2 
+
+##Потом прокинул порты, чтобы мог через браузер достучаться до контейнера 
+lxc config device add lesson4 proxy80 proxy \
+  listen=tcp:0.0.0.0:8080 \
+  connect=tcp:127.0.0.1:80 \
+  bind=host
+
+  
