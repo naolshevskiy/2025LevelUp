@@ -7,7 +7,7 @@ set -e
 
 echo "Начинаем развёртывание WebBooks (Spring Boot) на Ubuntu 20.04..."
 
-# === КОНФИГУРАЦИЯ ===
+
 APP_NAME="webbooks"
 APP_USER="webbooks"
 APP_DIR="/home/nikita/2025-07-example/apps/$APP_NAME"
@@ -54,7 +54,7 @@ sudo systemctl restart postgresql
 
 # Создание базы данных
 echo " Создание базы данных $DB_NAME..."
-sudo -u postgres psql -c "CREATE DATABASE $DB_NAME;" 2>/dev/null || echo "⚠️ База данных уже существует."
+sudo -u postgres psql -c "CREATE DATABASE $DB_NAME;" 2>/dev/null || echo " База данных уже существует."
 
 # Восстановление демо-данных (если файл существует)
 DATA_SQL="$APP_DIR/src/main/resources/data.sql"
@@ -80,7 +80,7 @@ EOF
 sudo chown "$APP_USER:$APP_GROUP" "$PROPS_FILE"
 
 
-echo "🔨 Сборка приложения через Maven Wrapper..."
+echo " Сборка приложения через Maven Wrapper..."
 
 cd "$APP_DIR"
 
