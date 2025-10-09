@@ -1,0 +1,106 @@
+terraform {
+  required_providers {
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
+  }
+}
+
+provider "null" {}
+
+resource "null_resource" "db" {
+  connection {
+    type        = "ssh"
+    user        = var.ssh_user
+    private_key = file(var.ssh_private_key_path)
+    host        = var.db_ip
+  }
+
+  # Копируем демо-данные
+  provisioner "file" {
+    source      = "${path.module}/files/data.sql"
+    destination = "/tmp/data.sql"
+  }
+
+  # Передаём отрендеренный скрипт с переменными
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/install_db.sh.tftpl", {
+      db_name     = var.db_name
+      db_password = var.db_password
+      subnet      = "192.168.227.0/24"  
+    })
+    destination = "/tmp/install_db.sh"
+  }
+
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/install_db.sh",
+      "/tmp/install_db.sh"
+    ]
+  }
+}
+
+
+resource "null_resource" "backend" {
+  depends_on = [null_resource.db]
+
+  connection {
+    type        = "ssh"
+    user        = var.ssh_user
+    private_key = file(var.ssh_private_key_path)
+    host        = var.backend_ip
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/files/digital-library-null.jar"
+    destination = "/tmp/app.jar"
+  }
+
+
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/install_backend.sh.tftpl", {
+      db_host     = var.db_ip
+      db_name     = var.db_name
+      db_user     = "postgres"
+      db_password = var.db_password
+    })
+    destination = "/tmp/install_backend.sh"
+  }
+
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/install_backend.sh",
+      "/tmp/install_backend.sh"
+    ]
+  }
+}
+
+resource "null_resource" "frontend" {
+  depends_on = [null_resource.backend]
+
+  connection {
+    type        = "ssh"
+    user        = var.ssh_user
+    private_key = file(var.ssh_private_key_path)
+    host        = var.frontend_ip
+  }
+
+
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/install_frontend.sh.tftpl", {
+      backend_ip = var.backend_ip
+    })
+    destination = "/tmp/install_frontend.sh"
+  }
+
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/install_frontend.sh",
+      "/tmp/install_frontend.sh"
+    ]
+  }
+}
