@@ -1,0 +1,30 @@
+resource "null_resource" "backend" {
+  connection {
+    type        = "ssh"
+    user        = var.ssh_user
+    private_key = file(var.ssh_private_key_path)
+    host        = var.ip_address
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/../../files/digital-library-null.jar"
+    destination = "/tmp/app.jar"
+  }
+
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/install_backend.sh.tftpl", {
+      db_host     = var.db_host
+      db_name     = var.db_name
+      db_user     = var.db_user
+      db_password = var.db_password
+    })
+    destination = "/tmp/install_backend.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/install_backend.sh",
+      "/tmp/install_backend.sh"
+    ]
+  }
+}

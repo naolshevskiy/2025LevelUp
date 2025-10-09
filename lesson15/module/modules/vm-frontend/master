@@ -1,0 +1,22 @@
+resource "null_resource" "frontend" {
+  connection {
+    type        = "ssh"
+    user        = var.ssh_user
+    private_key = file(var.ssh_private_key_path)
+    host        = var.ip_address
+  }
+
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/install_frontend.sh.tftpl", {
+      backend_ip = var.backend_ip
+    })
+    destination = "/tmp/install_frontend.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/install_frontend.sh",
+      "/tmp/install_frontend.sh"
+    ]
+  }
+}
