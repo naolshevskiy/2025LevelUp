@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'JAR_FILE', defaultValue: '', description: 'Имя JAR-файла')
+        string(name: 'CI_BUILD_NUMBER', defaultValue: '', description: 'Номер сборки из webbooks-ci')
+    }
+
+    environment {
+        VM_IP = '192.168.227.134'      
+        VM_USER = 'nikita'           // ← ЗАМЕНИ НА СВОЙ ПОЛЬЗОВАТЕЛЬ
+        APP_DIR = '/opt/webbooks'
+    }
+
+    stages {
+        stage('Получить артефакт') {
+            steps {
+                script {
+                    copyArtifacts(
+                        projectName: 'webbooks-ci',
+                        selector: [$class: 'SpecificBuildSelector', buildNumber: params.CI_BUILD_NUMBER],
+                        target: 'artifacts'
+                    )
+                }
+            }
+        }
+
+        stage('Деплой на ВМ') {
+            steps {
+                script {
+                    def localJar = "artifacts/${params.JAR_FILE}"
+                    def remoteJar = "${env.APP_DIR}/${params.JAR_FILE}"
+
+                    sh "ssh ${env.VM_USER}@${env.VM_IP} 'mkdir -p ${env.APP_DIR}'"
+                    sh "scp ${localJar} ${env.VM_USER}@${env.VM_IP}:${remoteJar}"
+                    sh "ssh ${env.VM_USER}@${env.VM_IP} 'pkill -f webbooks || true'"
+                    sh """
+                        ssh ${env.VM_USER}@${env.VM_IP} 'cd ${env.APP_DIR} && \\
+                        nohup java -jar ${params.JAR_FILE} > app.log 2>&1 &'
+                    """
+                }
+            }
+        }
+    }
+}
