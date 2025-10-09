@@ -1,0 +1,5 @@
+db_ip        = "192.168.227.138"
+backend_ip   = "192.168.227.137"
+frontend_ip  = "192.168.227.136"
+ssh_user     = "nikita"
+ssh_private_key_path = "~/.ssh/webbooks_id"

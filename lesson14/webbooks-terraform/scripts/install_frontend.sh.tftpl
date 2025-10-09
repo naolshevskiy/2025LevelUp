@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+
+echo "Установка nginx..."
+sudo apt-get update
+sudo apt-get install -y nginx
+
+echo "Настройка reverse proxy на ${backend_ip}:8080..."
+cat <<EOF | sudo tee /etc/nginx/sites-available/webbooks > /dev/null
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://${backend_ip}:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+}
+EOF
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo ln -sf /etc/nginx/sites-available/webbooks /etc/nginx/sites-enabled/
+
+echo "Перезапуск nginx..."
+sudo systemctl restart nginx
+
+echo "✅ Frontend (nginx) готов! Откройте http://$(hostname -I | awk '{print $1}')"

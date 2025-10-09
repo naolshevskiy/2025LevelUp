@@ -1,0 +1,91 @@
+#!/bin/bash
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+
+echo "Установка OpenJDK 17..."
+sudo apt-get update
+sudo apt-get install -y openjdk-17-jre-headless
+
+echo "Копирование JAR..."
+sudo mkdir -p /opt/webbooks
+sudo cp /tmp/app.jar /opt/webbooks/app.jar
+
+echo "Создание application.properties..."
+cat <<EOF | sudo tee /opt/webbooks/application.properties > /dev/null
+DB.driver=org.postgresql.Driver
+DB.url=jdbc:postgresql://${db_host}:5432/${db_name}
+DB.user=${db_user}
+DB.password=${db_password}
+EOF
+
+echo "Создание systemd-сервиса..."
+cat <<EOF | sudo tee /etc/systemd/system/webbooks.service > /dev/null
+[Unit]
+Description=WebBooks Application
+After=network.target
+
+[Service]
+User=nikita
+WorkingDirectory=/opt/webbooks
+ExecStart=/usr/bin/java -jar /opt/webbooks/app.jar --spring.config.location=file:/opt/webbooks/application.properties
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "Перезагрузка демона systemd..."
+sudo systemctl daemon-reload
+
+echo "Включение и запуск сервиса..."
+sudo systemctl enable webbooks
+sudo systemctl start webbooks
+
+echo "✅ Backend запущен на порту 8080!"#!/bin/bash
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+
+echo "Установка OpenJDK 17..."
+sudo apt-get update
+sudo apt-get install -y openjdk-17-jre-headless
+
+echo "Копирование JAR..."
+sudo mkdir -p /opt/webbooks
+sudo cp /tmp/app.jar /opt/webbooks/app.jar
+
+echo "Создание application.properties..."
+cat <<EOF | sudo tee /opt/webbooks/application.properties > /dev/null
+DB.driver=org.postgresql.Driver
+DB.url=jdbc:postgresql://${db_host}:5432/${db_name}
+DB.user=${db_user}
+DB.password=${db_password}
+EOF
+
+echo "Создание systemd-сервиса..."
+cat <<EOF | sudo tee /etc/systemd/system/webbooks.service > /dev/null
+[Unit]
+Description=WebBooks Application
+After=network.target
+
+[Service]
+User=nikita
+WorkingDirectory=/opt/webbooks
+ExecStart=/usr/bin/java -jar /opt/webbooks/app.jar --spring.config.location=file:/opt/webbooks/application.properties
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "Перезагрузка демона systemd..."
+sudo systemctl daemon-reload
+
+echo "Включение и запуск сервиса..."
+sudo systemctl enable webbooks
+sudo systemctl start webbooks
+
+echo "✅ Backend запущен на порту 8080!"
