@@ -1,0 +1,22 @@
+docker run -d \
+  --name db \
+  --network webbooks_net \
+  -e POSTGRES_DB=webbooks_db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -v pg/var/lib/postgresql/data \
+  -v $(pwd)/initdb:/docker-entrypoint-initdb.d:ro \
+  postgres:12
+
+  docker run -d \
+  --name backend \
+  --network webbooks_net \
+  -p 8080:8080 \
+  webbooks-backend
+
+  docker run -d \
+  --name frontend \
+  --network webbooks_net \
+  -p 80:80 \
+  -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf:ro \
+  nginx:alpine
