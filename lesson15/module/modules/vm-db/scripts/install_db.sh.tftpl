@@ -1,0 +1,38 @@
+#!/bin/bash
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+
+echo "Обновление системы..."
+sudo apt-get update
+
+echo "Установка PostgreSQL 12..."
+sudo apt-get install -y postgresql-12
+
+echo "Настройка пароля для postgres..."
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '${db_password}';"
+
+echo "Настройка listen_addresses..."
+sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/12/main/postgresql.conf
+
+echo "Разрешение подключений из локальной сети..."
+if ! grep -q "192.168.109.0/24" /etc/postgresql/12/main/pg_hba.conf; then
+  echo "host all all 192.168.109.0/24 md5" | sudo tee -a /etc/postgresql/12/main/pg_hba.conf
+fi
+
+echo "Перезапуск PostgreSQL..."
+sudo systemctl restart postgresql
+
+# Создавать БД только если она не существует
+if ! sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "${db_name}"; then
+  echo "Создание БД ${db_name}..."
+  sudo -u postgres createdb "${db_name}"
+else
+  echo "БД ${db_name} уже существует — пропускаем создание."
+fi
+
+echo "Загрузка демо-данных..."
+# Опционально: можно добавить флаг --clean или проверку, но для учебного — просто загружаем
+sudo -u postgres psql "${db_name}" < /tmp/data.sql
+
+echo "✅ DB готова!"

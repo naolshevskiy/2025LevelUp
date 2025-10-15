@@ -1,0 +1,29 @@
+resource "null_resource" "db" {
+  connection {
+    type        = "ssh"
+    user        = var.ssh_user
+    private_key = file(var.ssh_private_key_path)
+    host        = var.ip_address
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/../../files/data.sql"
+    destination = "/tmp/data.sql"
+  }
+
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/install_db.sh.tftpl", {
+      db_name     = var.db_name
+      db_password = var.db_password
+      subnet      = var.subnet_cidr
+    })
+    destination = "/tmp/install_db.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/install_db.sh",
+      "/tmp/install_db.sh"
+    ]
+  }
+}
