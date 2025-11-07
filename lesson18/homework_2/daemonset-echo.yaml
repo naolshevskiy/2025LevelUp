@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: echo-daemonset
+  namespace: levelup
+spec:
+  selector:
+    matchLabels:
+      app: echo
+  template:
+    metadata:
+      labels:
+        app: echo
+    spec:
+      containers:
+      - name: echo
+        image: busybox
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do echo 'DaemonSet is running on $(hostname)'; sleep 10; done"]
